@@ -6,10 +6,31 @@ import {
   HeartIcon,
   RssIcon,
 } from "@heroicons/react/outline";
+import { useSession } from "next-auth/react";
+import { useEffect, useState } from "react";
+import { useRecoilState } from "recoil";
+import { playListIdState } from "../atoms/playlistAtom";
+import useSpotify from "../hooks/useSpotify";
+// import Songs from "./Songs";
 
 export const Sidebar = () => {
+  const { data: session, status } = useSession();
+  const [playLists, setPlayLists] = useState([]);
+  const [playListId, setPlayListId] = useRecoilState(playListIdState);
+
+  console.log(playListId);
+  const spotifyApi = useSpotify();
+
+  useEffect(() => {
+    if (spotifyApi.getAccessToken()) {
+      spotifyApi.getUserPlaylists().then((data) => {
+        setPlayLists(data.body.items);
+      });
+    }
+  }, [session, spotifyApi]);
+
   return (
-    <div className="text-gray-500 p-5 border-r border-gray-900">
+    <div className="text-gray-500 p-5 text-xs lg:text-sm border-r border-gray-900 overflow-y-scroll h-screen scrollbar-hide sm:max-w-[12rem] lg:max-w-[15rem] hidden md:inline-flex">
       <div className="space-y-4">
         <button className=" flex  items-center space-x-2 hover:text-white">
           <HomeIcon className="h-5 w-5" />
@@ -43,6 +64,17 @@ export const Sidebar = () => {
           <p>Your episodes</p>
         </button>
         <hr className="border-t-[0.1px] border-gray-900" />
+        {/* PlayLists... */}
+
+        {playLists.map((playList) => (
+          <p
+            key={playList.id}
+            onClick={() => setPlayListId(playList.id)}
+            className="cursor-pointer hover:text-white"
+          >
+            {playList.name}
+          </p>
+        ))}
       </div>
     </div>
   );
